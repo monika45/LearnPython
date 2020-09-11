@@ -62,6 +62,7 @@ class Person:
     def __init__(self, name, age):
         self._name = name
         self._age = age
+        self.__hobby = '吃喝玩乐'
 
     @property
     def name(self):
@@ -97,7 +98,7 @@ class Student(Person):
         self._grade = grade
 
     def study(self, course):
-        print('%s的%s正在学习%s'% (self._grade, self._name, course))
+        print('%s的%s正在学习%s' % (self._grade, self._name, course))
 
 
 class Teacher(Person):
@@ -114,13 +115,34 @@ class Teacher(Person):
         self._title = title
 
     def teach(self, course):
-        print('%s%s正在讲%s'% (self._name, self._title, course))
+        print('%s%s正在讲%s' % (self._name, self._title, course))
 
     def play(self):
         print('Teacher里重写play')
 
 
-# 用ABCMeta和abstractmethod来实现抽象类，声明为抽象类后，不可实例化，必须在子类中实现抽象方法（多态）
+# 用ABCMeta和abstractmethod来实现抽象类。用ABCMeta或其派生类作为metaclass的类，不可实例化，必须在子类中实现其所有的抽象方法（多态）
+class Pet(metaclass=ABCMeta):
+    def __init__(self, nickname):
+        self._nickname = nickname
+
+    @abstractmethod
+    def make_voice(self):
+        """发出声音"""
+        pass
+
+
+class Dog(Pet):
+
+    def make_voice(self):
+        print('%s~~汪汪汪' % self._nickname)
+
+
+class Cat(Pet):
+
+    def make_voice(self):
+        print('%s~~~喵喵喵' % self._nickname)
+
 
 
 
@@ -136,12 +158,15 @@ if __name__ == '__main__':
     # print(dir(p1))
     # p3 = P(2, 6)
     # print(dir(p3))
-    stu = Student('张三', 18, '高三')
-    stu.study('数学')
-    print(stu.is_adult())
-    stu.play()
+    # stu = Student('张三', 18, '高三')
+    # stu.study('数学')
+    # print(stu.is_adult())
+    # stu.play()
+    #
+    # tea = Teacher('李武', 30, '物理')
+    # tea.teach('三大定律')
+    # tea.play()
 
-    tea = Teacher('李武', 30, '物理')
-    tea.teach('三大定律')
-    tea.play()
-
+    pets = [Dog('大黄'), Cat('小白'), Dog('大宝')]
+    for p in pets:
+        p.make_voice()

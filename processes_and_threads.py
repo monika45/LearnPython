@@ -8,7 +8,9 @@ from time import time, sleep
 from multiprocessing import Process, Queue, Pool, Pipe, Lock, Value, Array, Manager, TimeoutError
 import os
 from os import getpid
-from threading import Thread
+import threading
+import tkinter
+import tkinter.messagebox
 
 
 def fake_task(task_name):
@@ -148,22 +150,29 @@ def f6(d, l):
 class Account:
     def __init__(self):
         self._balance = 0
+        self._lock = threading.Lock()
 
     def deposit(self, money):
         """计算存款后的余额"""
-        new_money = self._balance + money
-        # 假如存储数据需要0.01秒
-        sleep(0.01)
-        self._balance = new_money
+        # 先获取锁才能执行后续的代码
+        self._lock.acquire()
+        try:
+            new_money = self._balance + money
+            # 假如存储数据需要0.01秒
+            sleep(0.01)
+            self._balance = new_money
+        finally:
+            # 在finally中执行释放锁的操作保证正常异常锁都能被释放
+            self._lock.release()
 
     @property
     def balance(self):
         return self._balance
 
 
-class AddMoneyThread(Thread):
+class AddMoneyThread(threading.Thread):
     def __init__(self, account, money):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self._account = account
         self._money = money
 
@@ -182,6 +191,97 @@ def simulation_deposit():
     for t in threads:
         t.join()
     print('账户余额为：%d元' % account.balance)
+
+
+"""不用多线程的情况"""
+
+
+def download():
+    sleep(10)
+    tkinter.messagebox.showinfo('提示', '下载完成')
+
+
+def show_about():
+    tkinter.messagebox.showinfo('关于', 'v1.0')
+
+
+def single_thread_demo():
+    top = tkinter.Tk()
+    top.title('单线程')
+    top.geometry('200x150')
+    top.wm_attributes('-topmost', True)
+    panel = tkinter.Frame(top)
+    button1 = tkinter.Button(panel, text='下载', command=download)
+    button1.pack(side='left')
+    button2 = tkinter.Button(panel, text='关于', command=show_about)
+    button2.pack(side='right')
+    panel.pack(side='bottom')
+
+    tkinter.mainloop()
+
+
+"""使用多线程将耗时间的任务放到一个独立的线程中执行，就不会阻塞主线程"""
+
+
+def multithreading_demo():
+    class DownloadTaskHandler(threading.Thread):
+        def run(self):
+            sleep(10)
+            tkinter.messagebox.showinfo('提示', '下载完成')
+            button1.config(state=tkinter.NORMAL)
+
+    def download():
+        button1.config(state=tkinter.DISABLED)
+        # 设置为守护进程，主程序退出就不再保留执行
+        DownloadTaskHandler(daemon=True).start()
+
+    def show_aboout():
+        tkinter.messagebox.showinfo('关于', 'v1.0')
+
+    top = tkinter.Tk()
+    top.title('多线程')
+    top.geometry('200x150')
+    top.wm_attributes('-topmost', 1)
+    panel = tkinter.Frame(top)
+    button1 = tkinter.Button(panel, text='下载', command=download)
+    button1.pack(side='left')
+    button2 = tkinter.Button(panel, text='关于', command=show_aboout)
+    button2.pack(side='right')
+    panel.pack(side='bottom')
+    tkinter.mainloop()
+
+
+def task_handler(curr_list, result_queue):
+    total = 0
+    for number in curr_list:
+        total += number
+    result_queue.put(total)
+
+
+def multiprocess_sum():
+    """利用多进程分而治之"""
+    processes = []
+    number_list = [x for x in range(0, 100000001)]
+    request_queue = Queue()
+    index = 0
+    # 启动8个进程将数据切片后运算
+    for _ in range(8):
+        p = Process(target=task_handler, args=(number_list[index:index + 12500000], request_queue))
+        index += 12500000
+        processes.append(p)
+        p.start()
+
+    start = time()
+    for p in processes:
+        p.join()
+    total = 0
+    while not request_queue.empty():
+        total += request_queue.get()
+    print(total)
+    end = time()
+    print('Execution time: ', (end - start), 's')
+
+
 
 if __name__ == '__main__':
     # do_task2()
@@ -288,4 +388,8 @@ if __name__ == '__main__':
     # end = time()
     # print('totally spend %.3f seconds' % (end - start))
 
-    simulation_deposit()
+    # simulation_deposit()
+
+    # single_thread_demo()
+    # multithreading_demo()
+    multiprocess_sum()

@@ -2,6 +2,9 @@
 基础知识
 """
 import sys
+import heapq
+import itertools
+import collections
 
 
 def assignment_operation():
@@ -178,6 +181,107 @@ def usage_of_dict():
     items2.popitem()
     print(items2)
 
+    # 生成式
+    prices = {
+        'AAPL': 191.88,
+        'GOOG': 1186.96,
+        'IBM': 149.24,
+        'ORCL': 48.44,
+        'ACN': 166.89,
+        'FB': 208.09,
+        'SYMC': 21.29
+    }
+    # 用股票价格大于100元的股票构造一个新的字典
+    print(prices.items())
+    prices2 = {key: value for key, value in prices.items() if value > 100}
+    print(prices2)
+
+
+def nested_list():
+    """
+    嵌套列表的坑
+    录入5个学生3门课的成绩
+    """
+    students = ['S1', 'S2', 'S3', 'S4', 'S5']
+    courses = ['C1', 'C2', 'C3']
+    # scores = [[None] * len(courses)] * len(students) --- 得到错误的列表结果，行指向的空间是同一个
+    # scores = [[None] * len(courses) for _ in range(len(students))]
+    scores = [None] * len(students)
+    for sindex, sname in enumerate(students):
+        scores[sindex] = [None] * len(courses)
+        for cindex, cname in enumerate(courses):
+            scores[sindex][cindex] = input(f'请输入第{sindex + 1}个学生{sname}第{cindex + 1}门课{cname}的成绩：')
+
+    print(scores)
+
+
+def use_heapq():
+    """
+    heapq模块（堆排序）
+    从列表中找出最大或最小的N个元素
+    堆结构（大根堆/小根堆）
+    :return:
+    """
+    list1 = [34, 25, 12, 99, 87, 63, 58, 78, 88, 92]
+    list2 = [
+        {'name': 'IBM', 'shares': 100, 'price': 91.1},
+        {'name': 'AAPL', 'shares': 50, 'price': 543.22},
+        {'name': 'FB', 'shares': 200, 'price': 21.09},
+        {'name': 'HPQ', 'shares': 35, 'price': 31.75},
+        {'name': 'YHOO', 'shares': 45, 'price': 16.35},
+        {'name': 'ACME', 'shares': 75, 'price': 115.65}
+    ]
+    print(heapq.nlargest(3, list1))
+    print(heapq.nsmallest(3, list1))
+    print(heapq.nlargest(2, list2, key=lambda x: x['price']))
+    print(heapq.nlargest(2, list2, key=lambda x: x['shares']))
+    heapq.heapify(list1)
+    print(list1)
+
+
+def use_itertool():
+    """迭代工具模块"""
+    # 产生ABCD的全排列
+    # print(itertools.permutations('ABCD'))
+    for x in itertools.permutations('ABCD'):
+        print(x)
+    # 四选二排列
+    for x in itertools.permutations('ABCD', 2):
+        print(x)
+    # 四选二组合
+    for x in itertools.combinations('ABCD', 2):
+        print(x)
+    #
+    # 产生ABCD和123的笛卡尔积
+    for x in itertools.product('ABCD', '123'):
+        print(x)
+    #
+    # 产生ABC的无限循环序列
+    for x in itertools.cycle(('A', 'B', 'C')):
+        print(x)
+
+
+def use_collections():
+    """
+    collections模块.
+    常用工具类：
+        namedtuple:命名元组
+        deque：双端队列
+        Counter：键是元素，值是元素的计数
+        OrderedDict：记录了键值对插入的顺序
+        defaultdict：类似于字典类型
+    """
+    # 找出序列中出现次数最多的元素
+    words = [
+        'look', 'into', 'my', 'eyes', 'look', 'into', 'my', 'eyes',
+        'the', 'eyes', 'the', 'eyes', 'the', 'eyes', 'not', 'around',
+        'the', 'eyes', "don't", 'look', 'around', 'the', 'eyes',
+        'look', 'into', 'my', 'eyes', "you're", 'under', 'look'
+    ]
+    counter = collections.Counter(words)
+    print(counter.most_common(3))
+
+
 
 if __name__ == '__main__':
-    usage_of_dict()
+    use_collections()

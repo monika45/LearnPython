@@ -1,6 +1,7 @@
 """文件"""
 from math import sqrt
 import json
+import struct
 
 
 def read_file():
@@ -68,6 +69,7 @@ def binary_file():
         print(ea)
     print('程序执行结束')
 
+
 # binary_file()
 
 
@@ -112,5 +114,54 @@ def json_file():
 # json_file()
 
 
+# 二进制字节文件
+def binary_bytes_files():
+    # create packed binary data, 10 bytes, not objects or text
+    packed = struct.pack('>i4sh', 7, b'spam', 8)
+    print(packed)
+    # 二进制模式写入文件
+    file = open('./res/data.bin', 'wb')
+    file.write(packed)
+    file.close()
+
+    # 读二进制数据
+    data = open('./res/data.bin', 'rb').read()
+    print(data)
+    print(data[4:8])
+    print(list(data))
+    # unpack into objects
+    unpack_data = struct.unpack('>i4sh', data)
+    print(unpack_data)
 
 
+# unicode文本文件: automatically encode on writes and decode on reads
+def unicode_text_files():
+    # 非ASCII编码的Unicode文本
+    s = 'sp\xc4m'
+    print(s)
+    print(s[2])
+    # write/encode UTF-8 text
+    file = open('./res/unidata.txt', 'w', encoding='utf-8')
+    file.write(s)
+    file.close()
+
+    # read/decode UTF-8 text
+    text = open('./res/unidata.txt', 'r', encoding='utf-8').read()
+    print(text)
+    # 4 chars
+    print(len(text))
+    # 通过二进制模式查看文件中真正存储的内容
+    raw = open('./res/unidata.txt', 'rb').read()
+    print(raw)
+    # really 5 bytes in utf-8
+    print(len(raw))
+
+    # 手动编码和解码
+    # encode to bytes
+    print(text.encode('utf-8'))
+    # decode to string
+    print(raw.decode('utf-8'))
+
+
+if __name__ == '__main__':
+    unicode_text_files()

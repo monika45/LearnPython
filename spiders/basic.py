@@ -79,8 +79,8 @@ def useProxyHandler():
 def login_zhihu():
     login_url = 'https://i.meishi.cc/login_t.php?username=18580229220&login_type=2&password=f2461061&cookietime=on'
     mine_url = 'https://i.meishi.cc/jifen/mingxi.php'
-    username = '18580229220'
-    password = 'f2461061'
+    username = '*****'
+    password = '****'
     cookiejar = CookieJar()
     handler = request.HTTPCookieProcessor(cookiejar)
     opener = request.build_opener(handler)

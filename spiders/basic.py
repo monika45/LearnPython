@@ -1,6 +1,6 @@
 from urllib import request
 from urllib import parse
-from http.cookiejar import CookieJar
+from http.cookiejar import CookieJar, MozillaCookieJar
 import json
 
 
@@ -77,6 +77,7 @@ def useProxyHandler():
 
 
 def login_meishijie():
+    """模拟登录"""
     login_url = 'https://i.meishi.cc/login_t.php?username=18580229220&login_type=2&password=f2461061&cookietime=on'
     mine_url = 'https://i.meishi.cc/jifen/mingxi.php'
     username = '18580229220'
@@ -100,5 +101,20 @@ def login_meishijie():
     print(resp.read().decode('utf-8'))
 
 
+def save_cookie():
+    """保存cookie到文件"""
+    cookiejar = MozillaCookieJar('../res/cookie.txt')
+    handler = request.HTTPCookieProcessor(cookiejar)
+    opener = request.build_opener(handler)
+    resp = opener.open('https://www.baidu.com')
+    print(resp.read())
+    # 如果cookie是回话完成后过期，或丢弃，不会被保存，除非设置ignore_discard=True,ignore_expires=True
+    cookiejar.save()
+    # cookie加载
+    cookiejar.load()
+    for cookie in cookiejar:
+        print(cookie)
+
+
 if __name__ == '__main__':
-    login_meishijie()
+    save_cookie()

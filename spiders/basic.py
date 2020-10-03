@@ -76,15 +76,29 @@ def useProxyHandler():
     print(resp.read())
 
 
-def login_zhihu():
+def login_meishijie():
     login_url = 'https://i.meishi.cc/login_t.php?username=18580229220&login_type=2&password=f2461061&cookietime=on'
     mine_url = 'https://i.meishi.cc/jifen/mingxi.php'
-    username = '*****'
-    password = '****'
+    username = '18580229220'
+    password = 'f2461061'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
+    }
+    login_data = parse.urlencode({
+        'username': username,
+        'password': password
+    })
     cookiejar = CookieJar()
     handler = request.HTTPCookieProcessor(cookiejar)
     opener = request.build_opener(handler)
-    rq = request.Request()
+    rq = request.Request(login_url, data=login_data.encode('utf-8'), headers=headers)
+    resp = opener.open(rq)
+    print(resp.getcode())
+
+    rq = request.Request(mine_url, headers=headers)
+    resp = opener.open(rq)
+    print(resp.read().decode('utf-8'))
+
 
 if __name__ == '__main__':
-    maoyanpiaofang()
+    login_meishijie()

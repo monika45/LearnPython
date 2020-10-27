@@ -2,6 +2,7 @@ from urllib import request
 from urllib import parse
 from http.cookiejar import CookieJar, MozillaCookieJar
 import json
+import requests
 
 
 def use_urllib():
@@ -78,10 +79,10 @@ def useProxyHandler():
 
 def login_meishijie():
     """模拟登录"""
-    login_url = 'https://i.meishi.cc/login_t.php?username=18580229220&login_type=2&password=f2461061&cookietime=on'
+    login_url = 'https://i.meishi.cc/login_t.php'
     mine_url = 'https://i.meishi.cc/jifen/mingxi.php'
-    username = '18580229220'
-    password = 'f2461061'
+    username = '***'
+    password = '***'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
     }
@@ -116,5 +117,56 @@ def save_cookie():
         print(cookie)
 
 
+def requests_get():
+    """使用requests模块发送get请求"""
+    url = 'https://www.baidu.com'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
+    }
+    kw = {
+        'wd': '中国'
+    }
+    response = requests.get(url, kw, headers=headers)
+    print(response)
+    # bytes data
+    print(response.content)
+    # unicode data
+    print(response.text)
+
+
+def requests_post():
+    """post and cookie"""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
+    }
+    login_url = 'https://i.meishi.cc/login_t.php?username=18580229220&login_type=2&password=f2461061&cookietime=on'
+    mine_url = 'https://i.meishi.cc/jifen/mingxi.php'
+    username = '18580229220'
+    password = 'f2461061'
+    login_data = {
+        'username': username,
+        'password': password,
+        'login_type': 2,
+        'cookietime': 'on'
+    }
+    # 创建一个会话对象
+    session = requests.session()
+    resp = session.post(login_url, login_data, headers=headers)
+    personal = session.get(mine_url)
+    with open('../res/1.html', 'wb') as file:
+        file.write(personal.content)
+
+
+def requests_proxy():
+    """requests 设置代理"""
+    url = 'http://httpbin.org/ip'
+    proxy = {
+        'http': 'ip:port'
+    }
+    resp = requests.get(url, proxies=proxy)
+    print(resp)
+
+
+
 if __name__ == '__main__':
-    save_cookie()
+    requests_post()

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,sql
+from sqlalchemy import create_engine, sql
 
 
 class BaseModel:
@@ -33,6 +33,7 @@ class BaseModel:
     def excute(self, sql):
         with self.__engine.connect() as conn:
             conn.execute(sql)
+
 
 
 

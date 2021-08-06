@@ -1,20 +1,23 @@
-from sqlalchemy import create_engine, sql
+from sqlalchemy import create_engine, sql, Table, MetaData
 
 
 class BaseModel:
+    __metadata = MetaData()
+    __table_name = ''
+    __columns = ()
+
     def __init__(self):
         self.__host = '127.0.0.1'
         self.__port = '33060'
         self.__dbname = 'test'
         self.__username = 'homestead'
         self.__password = 'secret'
-        self.__engine = create_engine(f'mysql://{self.__username}:{self.__password}@{self.__host}:{self.__port}/{self.__dbname}',
-                                    echo=True)
+        self.__engine = create_engine(
+            f'mysql://{self.__username}:{self.__password}@{self.__host}:{self.__port}/{self.__dbname}',
+            echo=True)
 
-    def query(self, sql_str):
-        with self.__engine.connect() as conn:
-            result = conn.execute(sql_str)
-            return result
+    def engine(self):
+        return self.__engine
 
     def insert(self, table, data_list):
         """
@@ -30,13 +33,27 @@ class BaseModel:
                          data_list)
         return True
 
-    def excute(self, sql):
+    def excute(self, sql, datas=None):
         with self.__engine.connect() as conn:
-            conn.execute(sql)
+            if datas:
+                return conn.execute(sql, datas)
+            return conn.execute(sql)
 
+    def get_table_name(self):
+        pass
 
+    def get_metadata(self):
+        pass
 
+    def get_columns(self):
+        pass
 
+    def get_table(self):
+        return Table(self.__table_name, self.__metadata, *self.__columns)
 
-
-
+    def create_table(self):
+        """
+        表不存在时创建表
+        """
+        self.get_table()
+        self.__metadata.create_all(self.__engine)

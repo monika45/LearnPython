@@ -2,9 +2,10 @@ from sqlalchemy import create_engine, sql, Table, MetaData
 
 
 class BaseModel:
-    __metadata = MetaData()
-    __table_name = ''
-    __columns = ()
+
+    table_name = ''
+    columns = ()
+    metadata = None
 
     def __init__(self):
         self.__host = '127.0.0.1'
@@ -15,6 +16,8 @@ class BaseModel:
         self.__engine = create_engine(
             f'mysql://{self.__username}:{self.__password}@{self.__host}:{self.__port}/{self.__dbname}',
             echo=True)
+
+        self.metadata = MetaData()
 
     def engine(self):
         return self.__engine
@@ -39,21 +42,15 @@ class BaseModel:
                 return conn.execute(sql, datas)
             return conn.execute(sql)
 
-    def get_table_name(self):
-        pass
-
-    def get_metadata(self):
-        pass
-
-    def get_columns(self):
-        pass
-
     def get_table(self):
-        return Table(self.__table_name, self.__metadata, *self.__columns)
+        return Table(self.table_name, self.metadata, *self.columns)
 
     def create_table(self):
         """
         表不存在时创建表
         """
         self.get_table()
-        self.__metadata.create_all(self.__engine)
+        self.metadata.create_all(self.__engine)
+
+
+

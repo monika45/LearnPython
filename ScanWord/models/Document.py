@@ -1,24 +1,15 @@
-from BaseModel import BaseModel
+from ScanWord.models.BaseModel import BaseModel
 import time
-from sqlalchemy import Table, Column, Integer, String, TIMESTAMP, MetaData, text, update, select
+from sqlalchemy import Column, Integer, String, TIMESTAMP
 
 
 class Document(BaseModel):
-    __table_name = 'document1'
-    __columns = (
+    table_name = 'document'
+    columns = (
         Column('id', Integer, primary_key=True),
         Column('name', String(200)),
         Column('createdAt', TIMESTAMP)
     )
-
-    def get_table_name(self):
-        return self.__table_name
-
-    def get_metadata(self):
-        return self.__metadata
-
-    def get_columns(self):
-        return self.__columns
 
 
 if __name__ == '__main__':

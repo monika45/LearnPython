@@ -7,9 +7,11 @@ class Document(BaseModel):
     table_name = 'document'
     columns = (
         Column('id', Integer, primary_key=True),
-        Column('name', String(200)),
+        Column('name', String(200), nullable=False),
         Column('createdAt', TIMESTAMP)
     )
+
+    created_at = 'createdAt'
 
 
 if __name__ == '__main__':

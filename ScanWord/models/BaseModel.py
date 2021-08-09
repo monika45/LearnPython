@@ -1,11 +1,17 @@
 from sqlalchemy import create_engine, sql, Table, MetaData
+import time
 
 
 class BaseModel:
-
     table_name = ''
     columns = ()
     metadata = None
+
+    # 时间字段
+    created_at = None
+    updated_at = None
+
+    table = None
 
     def __init__(self):
         self.__host = '127.0.0.1'
@@ -21,6 +27,9 @@ class BaseModel:
 
     def engine(self):
         return self.__engine
+
+    def conn(self):
+        return self.engine().connect()
 
     def insert(self, table, data_list):
         """
@@ -43,7 +52,9 @@ class BaseModel:
             return conn.execute(sql)
 
     def get_table(self):
-        return Table(self.table_name, self.metadata, *self.columns)
+        if self.table is None:
+            self.table = Table(self.table_name, self.metadata, *self.columns)
+        return self.table
 
     def create_table(self):
         """
@@ -52,5 +63,38 @@ class BaseModel:
         self.get_table()
         self.metadata.create_all(self.__engine)
 
+    def complete_time_fields(self, data):
+        """
+        填充时间字段值
+        data: 数据字典
+        """
+        if self.created_at and self.created_at not in data.keys():
+            data[self.created_at] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        if self.updated_at and self.updated_at not in data.keys():
+            data[self.updated_at] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        return data
 
+    def insert_all(self, datas):
+        """
+        批量插入，自动填充时间字段
+        datas: 数据字典列表
+        """
+        datas = [self.complete_time_fields(data) for data in datas]
+        self.excute(self.get_table().insert().values(datas))
+        return True
 
+    def insert_get_id(self, data):
+        """
+        插入一条记录并获取主键值。
+        自动插入时间字段
+        data: 字典
+        """
+        data = self.complete_time_fields(data)
+        result = self.excute(self.get_table().insert().values(data))
+        return result.inserted_primary_key
+
+    def update(self, where, data):
+        if self.updated_at and self.updated_at not in data.keys():
+            data[self.updated_at] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        result = self.excute(self.get_table().update().where(where).values(data))
+        return result

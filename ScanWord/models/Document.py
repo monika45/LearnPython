@@ -8,6 +8,7 @@ class Document(BaseModel):
     columns = (
         Column('id', Integer, primary_key=True),
         Column('name', String(200), nullable=False),
+        Column('remark', String(200)),
         Column('createdAt', TIMESTAMP)
     )
 

@@ -1,8 +1,9 @@
 import sys
 import time
-from sqlalchemy import text, select, case
+from sqlalchemy import text, select, case, func, distinct, sql
 from ScanWord.models.Catalog import Catalog
-from ScanWord.models.Document import Document
+from Scan
+Word.models.Document import Document
 
 if __name__ == '__main__':
     # 创建表、批量插入记录、插入记录并获取主键ID、更新记录、查询
@@ -91,4 +92,16 @@ if __name__ == '__main__':
     #         )
     #     )
     # print(document.excute(stmt).all())
+
+    # func和distinct
+    # document = Document()
+    # doc_t = document.get_table()
+    # stmt = select(func.count(doc_t.c.name))
+    # print(document.excute(stmt).all())
+    # print(document.excute(select(distinct(doc_t.c.name))).all())
+
+
+    # 表是否存在
+    # document = Document()
+    # print(document.has_table('catalogs_4'))
 

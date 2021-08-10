@@ -56,12 +56,23 @@ class BaseModel:
             self.table = Table(self.table_name, self.metadata, *self.columns)
         return self.table
 
+    def has_table(self, table_name=None):
+        """
+        表是否存在
+        """
+        if table_name is None:
+            table_name = self.table_name
+        return self.engine().has_table(sql.quoted_name(table_name, True))
+
     def create_table(self):
         """
         表不存在时创建表
         """
+        if self.has_table():
+            return True
         self.get_table()
         self.metadata.create_all(self.__engine)
+        return True
 
     def complete_time_fields(self, data):
         """

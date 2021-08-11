@@ -2,8 +2,7 @@ import sys
 import time
 from sqlalchemy import text, select, case, func, distinct, sql
 from ScanWord.models.Catalog import Catalog
-from Scan
-Word.models.Document import Document
+from ScanWord.models.Document import Document
 
 if __name__ == '__main__':
     # 创建表、批量插入记录、插入记录并获取主键ID、更新记录、查询

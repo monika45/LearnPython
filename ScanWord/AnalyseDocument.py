@@ -7,10 +7,6 @@ import docx
 class AnalyseDocument:
     # 正文段落
     contentParas = []
-    # 上一个最小标题及其父标题
-    last_catalog_indexes = []
-
-
 
     # 最终数据。标题加条款
     data = []
@@ -20,23 +16,24 @@ class AnalyseDocument:
 
     # 目录大纲的字体
     outline_font = '楷体_GB2312'
+    # 正文条目内容字体必须不在catalog_font和item_title_font里
     # 正文里的标题字体
-    catalog_font = '黑体'
-    # 正文里的条目的标题（正文条目内容必须用和所有标题不一样的字体）
+    catalog_font = ['黑体', '宋体']
+    catalog_level = ['编', '分编', '章', '节']
     item_title_font = '黑体'
 
-    def analyse(self, file):
+    def analyse(self, resolved_file):
         # 过滤空行后的段落，空行不参与解析
-        filterdParas = [para for para in file.paragraphs if para.text != '']
+        filterd_paras = [para for para in resolved_file.paragraphs if para.text != '']
         # 第一段是文档名
-        self.name = filterdParas.pop(0).text
+        self.name = filterd_paras.pop(0).text
         # 第二段是备注
-        self.remark = filterdParas.pop(0).text.replace('（', '').replace('）', '')
+        self.remark = filterd_paras.pop(0).text.replace('（', '').replace('）', '')
         # 过滤目录
-        if filterdParas[0].text.startswith('目') and filterdParas[0].text.endswith('录'):
-            filterdParas.pop(0)
+        if filterd_paras[0].text.startswith('目') and filterd_paras[0].text.endswith('录'):
+            filterd_paras.pop(0)
         # 正文段落,  过滤目录大纲
-        self.contentParas = [para for para in filterdParas if para.runs[0].font.name != self.outline_font]
+        self.contentParas = [para for para in filterd_paras if para.runs[0].font.name != self.outline_font]
 
         para_index = 0
         while para_index < len(self.contentParas):
@@ -50,7 +47,6 @@ class AnalyseDocument:
                 # 加入到data上
                 brothers.insert(0, current_item)
                 catalogs_indexes = self.catalog_indexes(current_item['index'])
-                self.last_catalog_indexes = catalogs_indexes
                 self.save_data({
                     'catalog_indexes': catalogs_indexes,
                     'items': brothers
@@ -69,7 +65,7 @@ class AnalyseDocument:
         return False
 
     def is_catalog(self, para):
-        if (not self.is_item(para)) and para.runs[0].font.name == self.catalog_font:
+        if (not self.is_item(para)) and (para.runs[0].font.name in self.catalog_font):
             return True
         return False
 
@@ -115,9 +111,6 @@ class AnalyseDocument:
         parent = self.find_item_parent(item_index)
         superiors = self.find_catalog_parents(parent)
         superiors.append(parent)
-        if len(superiors) == 1 and len(self.last_catalog_indexes) > 1:
-            # 条目的标题只有一级，但上个条目的标题有多个，说明是上个标题的同级标题，把上个标题的父元素同步过来
-            superiors = self.last_catalog_indexes[:-1] + superiors
         return superiors
 
     def find_item_parent(self, item_index):
@@ -136,13 +129,27 @@ class AnalyseDocument:
         返回上级的所有index列表，0->n,级别递减
         """
         parent_indexes = []
+        # 当前标题的级别位置
+        current_level = self.catalog_level.index(self.contentParas[catalog_index].runs[0].text[-1])
         index = catalog_index - 1
-        while index >= 0:
+        prev_level = current_level - 1
+
+        while index >= 0 and prev_level >= 0:
             if not self.is_catalog(self.contentParas[index]):
-                break
-            parent_indexes.insert(0, index)
-            index = index - 1
+                continue
+            # 往上找第一个遇到的上级，一直找到最大level的标题
+            level = self.get_ele_index(self.contentParas[index].runs[0].text[-1], self.catalog_level[0:prev_level + 1])
+            if level is not None:
+                parent_indexes.insert(0, index)
+                index = index - 1
+                prev_level = prev_level - 1
         return parent_indexes
+
+
+    def get_ele_index(self, ele, list):
+        if ele in list:
+            return list.index(ele)
+        return None
 
     def catalog_title(self, catalog_index):
         return self.contentParas[catalog_index].text

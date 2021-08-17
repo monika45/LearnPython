@@ -2,6 +2,7 @@ from ScanWord.models.Catalog import Catalog
 from ScanWord.models.Document import Document
 from ScanWord.models.Item import Item
 import docx
+import re
 
 
 class AnalyseDocument:
@@ -10,6 +11,7 @@ class AnalyseDocument:
 
     # 最终数据。标题加条款
     data = []
+    catalogs = []
 
     name = ''
     remark = ''
@@ -19,7 +21,9 @@ class AnalyseDocument:
     # 正文条目内容字体必须不在catalog_font和item_title_font里
     # 正文里的标题字体
     catalog_font = ['黑体', '宋体']
+    # 所有标题层级
     catalog_level = ['编', '分编', '章', '节']
+    special_top_catalog = ['附则']
     item_title_font = '黑体'
 
     def analyse(self, resolved_file):
@@ -34,10 +38,14 @@ class AnalyseDocument:
             filterd_paras.pop(0)
         # 正文段落,  过滤目录大纲
         self.contentParas = [para for para in filterd_paras if para.runs[0].font.name != self.outline_font]
-
         para_index = 0
         while para_index < len(self.contentParas):
             para = self.contentParas[para_index]
+            if self.is_catalog(para):
+                self.catalogs.append({
+                    'index': para_index,
+                    'para': para
+                })
             if self.is_item(para):
                 # 判断下面段落是否是当前条目的内容
                 next_index, current_item = self.complete_item(para_index)
@@ -57,9 +65,33 @@ class AnalyseDocument:
                 para_index = para_index + 1
         return self.data
 
+    def is_special_top_catalog(self, para):
+        if para.runs[0].font.name not in self.catalog_font:
+            return False
+        txt = para.text.replace('\u3000', '')
+        if txt in self.special_top_catalog:
+            return True
+        return False
+
+    def get_para_title(self, para):
+        if self.is_special_top_catalog(para):
+            return para.text
+        title = para.text.split('\u3000')[0]
+        if title[0] == '第' and (title[-1] == '条' or title[-1] in self.catalog_level):
+            return title
+        title = para.runs[0].text
+        if title[0] == '第' and (title[-1] == '条' or title[-1] in self.catalog_level):
+            return title
+        raise ValueError(f'获取段落标题失败：{para.text}')
+
     def is_item(self, para):
-        if para.runs[0].text.startswith('第') \
-                and para.runs[0].text.endswith('条') \
+        if self.is_item_content(para):
+            return False
+        if not para.text.startswith('第'):
+            return False
+        title = self.get_para_title(para)
+        if title.startswith('第') \
+                and title.endswith('条') \
                 and para.runs[0].font.name == self.item_title_font:
             return True
         return False
@@ -70,12 +102,16 @@ class AnalyseDocument:
         return False
 
     def is_item_content(self, para):
-        return not (self.is_item(para) or self.is_catalog(para))
+        if para.runs[0].font.name == self.item_title_font:
+            return False
+        if para.runs[0].font.name in self.catalog_font:
+            return False
+        return True
 
     def complete_item(self, item_index):
         item = {
             'index': item_index,
-            'title': self.contentParas[item_index].runs[0].text
+            'title': self.get_para_title(self.contentParas[item_index])
         }
         current_content = self.contentParas[item_index].text.replace(item['title'], '').strip()
         # 判断下面的段落是否是本条的内容
@@ -129,27 +165,30 @@ class AnalyseDocument:
         返回上级的所有index列表，0->n,级别递减
         """
         parent_indexes = []
+        if self.is_special_top_catalog(self.contentParas[catalog_index]):
+            return parent_indexes
         # 当前标题的级别位置
-        current_level = self.catalog_level.index(self.contentParas[catalog_index].runs[0].text[-1])
-        index = catalog_index - 1
-        prev_level = current_level - 1
-
-        while index >= 0 and prev_level >= 0:
-            if not self.is_catalog(self.contentParas[index]):
-                continue
-            # 往上找第一个遇到的上级，一直找到最大level的标题
-            level = self.get_ele_index(self.contentParas[index].runs[0].text[-1], self.catalog_level[0:prev_level + 1])
+        current_level = self.get_level_index(self.contentParas[catalog_index], self.catalog_level)
+        if current_level is None:
+            raise ValueError(f'获取标题级别失败：index:{catalog_index},text:{self.contentParas[catalog_index]}')
+        catalogs = self.catalogs[:]
+        while len(catalogs) > 0 and current_level > 0:
+            current_catalog = catalogs[-1]
+            catalogs.pop(-1)
+            level = self.get_level_index(current_catalog['para'], self.catalog_level[0:current_level])
             if level is not None:
-                parent_indexes.insert(0, index)
-                index = index - 1
-                prev_level = prev_level - 1
+                parent_indexes.insert(0, current_catalog['index'])
+                current_level = level
         return parent_indexes
 
-
-    def get_ele_index(self, ele, list):
-        if ele in list:
-            return list.index(ele)
-        return None
+    def get_level_index(self, para, level_list):
+        title = self.get_para_title(para)
+        level_text = re.split(r'.+[一二三四五六七八九十]+', title)[-1]
+        try:
+            index = level_list.index(level_text)
+        except ValueError:
+            return None
+        return index
 
     def catalog_title(self, catalog_index):
         return self.contentParas[catalog_index].text

@@ -3,6 +3,7 @@ import time
 from sqlalchemy import text, select, case, func, distinct, sql
 from ScanWord.models.Catalog import Catalog
 from ScanWord.models.Document import Document
+import re
 
 if __name__ == '__main__':
     # 创建表、批量插入记录、插入记录并获取主键ID、更新记录、查询
@@ -103,4 +104,11 @@ if __name__ == '__main__':
     # 表是否存在
     # document = Document()
     # print(document.has_table('catalogs_4'))
+
+
+    a = '分编'
+    re_str = r'.+[一二三四五六七八九十]+'
+    print(re.split(r'.+[一二三四五六七八九十]+', a))
+
+
 
